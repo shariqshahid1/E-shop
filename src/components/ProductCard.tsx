@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCart } from '@/context/CartContext';
@@ -8,21 +9,33 @@ import { Product } from '@/types';
 
 const ProductCard = ({ product }: { product: Product }) => {
   const { addToCart, addToWishlist, wishlist } = useCart();
+  const [imgError, setImgError] = useState(false);
 
   const isWishlisted = wishlist.some((item) => item._id === product._id);
+
+  // Fallback image URL in case the primary image fails
+  const fallbackImage = 'https://images.unsplash.com/photo-1560393464-5c69a73c5770?w=800&q=80';
 
   return (
     <div className="group bg-white rounded-3xl md:rounded-[3rem] shadow-[0_10px_40px_rgba(0,0,0,0.03)] hover:shadow-[0_40px_80px_rgba(37,99,235,0.12)] transition-all duration-700 overflow-hidden border border-gray-100 flex flex-col h-full transform hover:-translate-y-4">
       {/* Image Container */}
-      <Link href={`/product/${product._id}`} className="relative block h-64 md:h-80 overflow-hidden m-3 md:m-4 rounded-2xl md:rounded-[2rem]">
-        <Image
-          src={product.image}
-          alt={product.name}
-          fill
-          className="object-cover group-hover:scale-110 transition-transform duration-1000 ease-out"
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          priority
-        />
+      <Link href={`/product/${product._id}`} className="relative block h-64 md:h-80 overflow-hidden m-3 md:m-4 rounded-2xl md:rounded-[2rem] bg-gray-50">
+        {!imgError ? (
+          <Image
+            src={product.image || fallbackImage}
+            alt={product.name}
+            fill
+            className="object-cover group-hover:scale-110 transition-transform duration-1000 ease-out"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            priority
+            onError={() => setImgError(true)}
+          />
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100 text-gray-400">
+            <Zap className="w-12 h-12 mb-2 opacity-20" />
+            <span className="text-[10px] font-black uppercase tracking-widest opacity-40">Preview Unavailable</span>
+          </div>
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
         
         {/* Badges */}

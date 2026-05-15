@@ -14,6 +14,7 @@ export default function ProductDetail() {
   const [product, setProduct] = useState<Product | null>(null);
   const [qty, setQty] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [imgError, setImgError] = useState(false);
   const { addToCart, addToWishlist, wishlist } = useCart();
   const router = useRouter();
 
@@ -48,6 +49,7 @@ export default function ProductDetail() {
   );
 
   const isWishlisted = wishlist.some((item) => item._id === product._id);
+  const fallbackImage = 'https://images.unsplash.com/photo-1560393464-5c69a73c5770?w=800&q=80';
 
   return (
     <div className="min-h-screen bg-[#fafafa]">
@@ -65,14 +67,22 @@ export default function ProductDetail() {
           {/* Product Image Section */}
           <div className="lg:col-span-7">
              <div className="relative aspect-[4/5] bg-white rounded-3xl md:rounded-[4rem] overflow-hidden shadow-2xl shadow-gray-200/50 border border-gray-100 group">
-                <Image
-                  src={product.image}
-                  alt={product.name}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-1000"
-                  priority
-                  sizes="(max-width: 1024px) 100vw, 60vw"
-                />
+                {!imgError ? (
+                  <Image
+                    src={product.image || fallbackImage}
+                    alt={product.name}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-1000"
+                    priority
+                    sizes="(max-width: 1024px) 100vw, 60vw"
+                    onError={() => setImgError(true)}
+                  />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center bg-gray-50 text-gray-300">
+                    <Zap className="w-20 h-20 mb-4 opacity-10" />
+                    <span className="font-black uppercase tracking-widest opacity-20">Visual Preview Unavailable</span>
+                  </div>
+                )}
                 <div className="absolute top-6 md:top-10 left-6 md:left-10 flex flex-col gap-2 md:gap-3">
                    <div className="bg-blue-600 text-white text-[9px] md:text-[10px] font-black px-4 md:px-5 py-2 md:py-2.5 rounded-full uppercase tracking-[0.2em] shadow-xl">
                       Elite Collection

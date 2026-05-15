@@ -29,7 +29,16 @@ export default function Home() {
       setError(null);
       try {
         const { data } = await api.get('/products');
-        setProducts(data);
+        // Ensure data is an array before setting
+        if (Array.isArray(data)) {
+          setProducts(data);
+        } else if (data && typeof data === 'object' && Array.isArray((data as any).products)) {
+          // Handle case where products might be wrapped in an object
+          setProducts((data as any).products);
+        } else {
+          console.error('Unexpected data format:', data);
+          setProducts([]);
+        }
       } catch (err: unknown) {
         console.error('Error fetching products:', err);
         const errorMessage = err instanceof Error ? err.message : 'Failed to connect to the elite server.';
