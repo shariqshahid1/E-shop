@@ -1,16 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import api from '@/lib/api';
 import Navbar from '@/components/Navbar';
 import { Plus, Edit, Trash2, Package } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Product } from '@/types';
+import allProducts from '@/data/products';
 
 export default function AdminProducts() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
   const { userInfo } = useAuth();
   const router = useRouter();
 
@@ -19,96 +18,69 @@ export default function AdminProducts() {
       router.push('/login');
       return;
     }
-
-    const fetchProducts = async () => {
-      try {
-        const { data } = await api.get('/products');
-        setProducts(data);
-      } catch (error) {
-        console.error('Error fetching products:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProducts();
+    setProducts(allProducts);
   }, [userInfo, router]);
 
-  const deleteHandler = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
-      try {
-        await api.delete(`/products/${id}`);
-        setProducts(products.filter((p) => p._id !== id));
-      } catch (error) {
-        console.error('Error deleting product:', error);
-        alert('Failed to delete product');
-      }
-    }
+  const deleteHandler = (id: string) => {
+    setProducts(products.filter((p) => p._id !== id));
   };
 
-  const createProductHandler = async () => {
-    try {
-      const { data } = await api.post('/products', {
-        name: 'Sample Name',
-        price: 0,
-        image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80',
-        category: 'Sample Category',
-        countInStock: 0,
-        description: 'Sample Description',
-      });
-      setProducts([data, ...products]);
-    } catch (error) {
-      console.error('Error creating product:', error);
-    }
+  const createProductHandler = () => {
+    const newProduct: Product = {
+      _id: String(Date.now()),
+      name: 'New Product',
+      price: 0,
+      image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80',
+      category: 'Category',
+      countInStock: 0,
+      description: 'Product description goes here.',
+    };
+    setProducts([newProduct, ...products]);
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (!userInfo || !userInfo.isAdmin) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#fafafa]">
       <Navbar />
-      <main className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-            <Package className="w-8 h-8 mr-3 text-blue-600" />
-            Product Management
+      <main className="container mx-auto px-4 sm:px-6 py-20 sm:py-24 md:py-28">
+        <div className="flex justify-between items-center mb-6 sm:mb-8">
+          <h1 className="text-lg sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <Package className="w-6 h-6 text-blue-600" />
+            Products
           </h1>
           <button
             onClick={createProductHandler}
-            className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors"
+            className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors"
           >
-            <Plus className="w-5 h-5" />
-            <span>Add Product</span>
+            <Plus className="w-4 h-4" /> Add Product
           </button>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border overflow-hidden">
-          <table className="w-full text-left border-collapse">
-            <thead className="bg-gray-50 border-b">
+        <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto">
+          <table className="w-full text-left min-w-[560px]">
+            <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
-                <th className="px-6 py-4 font-bold text-gray-700 uppercase text-xs">ID</th>
-                <th className="px-6 py-4 font-bold text-gray-700 uppercase text-xs">Name</th>
-                <th className="px-6 py-4 font-bold text-gray-700 uppercase text-xs">Price</th>
-                <th className="px-6 py-4 font-bold text-gray-700 uppercase text-xs">Category</th>
-                <th className="px-6 py-4 font-bold text-gray-700 uppercase text-xs">Actions</th>
+                <th className="px-3 sm:px-5 py-3 text-xs font-semibold text-gray-500 uppercase">ID</th>
+                <th className="px-3 sm:px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Name</th>
+                <th className="px-3 sm:px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Price</th>
+                <th className="px-3 sm:px-5 py-3 text-xs font-semibold text-gray-500 uppercase hidden sm:table-cell">Category</th>
+                <th className="px-3 sm:px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <tbody className="divide-y divide-gray-50">
               {products.map((product) => (
                 <tr key={product._id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 text-sm text-gray-500 font-mono">{product._id.substring(0, 8)}...</td>
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{product.name}</td>
-                  <td className="px-6 py-4 text-sm text-gray-900 font-bold">${product.price}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{product.category}</td>
-                  <td className="px-6 py-4 text-sm space-x-3">
+                  <td className="px-3 sm:px-5 py-3 text-xs text-gray-400 font-mono">{product._id.substring(0, 8)}...</td>
+                  <td className="px-3 sm:px-5 py-3 text-sm font-medium text-gray-900">{product.name}</td>
+                  <td className="px-3 sm:px-5 py-3 text-sm font-semibold text-gray-900">${product.price}</td>
+                  <td className="px-3 sm:px-5 py-3 text-sm text-gray-500 hidden sm:table-cell">{product.category}</td>
+                  <td className="px-3 sm:px-5 py-3 text-sm space-x-2">
                     <button className="text-blue-600 hover:text-blue-800 p-1">
-                      <Edit className="w-5 h-5" />
+                      <Edit className="w-4 h-4" />
                     </button>
-                    <button
-                      onClick={() => deleteHandler(product._id)}
-                      className="text-red-600 hover:text-red-800 p-1"
-                    >
-                      <Trash2 className="w-5 h-5" />
+                    <button onClick={() => deleteHandler(product._id)} className="text-red-500 hover:text-red-700 p-1">
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </td>
                 </tr>

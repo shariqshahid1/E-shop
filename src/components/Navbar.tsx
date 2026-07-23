@@ -2,175 +2,148 @@
 
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
-import { ShoppingCart, Heart, Search, Menu, X } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { ShoppingCart, Heart, Search, Menu, X, LogOut, User } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import { UserButton, SignInButton, useAuth } from "@clerk/nextjs";
+import { useRouter } from 'next/navigation';
 
 const Navbar = () => {
   const { cartItems, wishlist } = useCart();
-  const { isSignedIn, isLoaded } = useAuth();
+  const { userInfo, logout } = useAuth();
   const [keyword, setKeyword] = useState('');
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
-  const pathname = usePathname();
 
-  const isHomePage = pathname === '/';
   const cartCount = cartItems.reduce((acc, item) => acc + item.qty, 0);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    const onScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Use scrolled state if actually scrolled OR if we're not on the Home page
-  const shouldBeSolid = !isHomePage || isScrolled;
-
-  const submitHandler = (e: React.FormEvent) => {
+  const search = (e: React.FormEvent) => {
     e.preventDefault();
     if (keyword.trim()) {
       router.push(`/search/${keyword}`);
-    } else {
-      router.push('/');
+      setMobileOpen(false);
+      setKeyword('');
     }
   };
 
+  const doLogout = () => {
+    logout();
+    setMobileOpen(false);
+    router.push('/');
+  };
+
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${
-      shouldBeSolid 
-        ? 'py-4 bg-white border-b border-gray-100 shadow-lg shadow-gray-200/20' 
-        : 'py-8 bg-transparent'
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-200 border-b ${
+      scrolled ? 'bg-white/95 backdrop-blur-sm border-gray-100 shadow-sm' : 'bg-white border-transparent'
     }`}>
-      <div className="container mx-auto px-6 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14">
         {/* Logo */}
-        <Link href="/" className="group flex items-center space-x-2 md:space-x-3">
-          <div className="w-10 h-10 md:w-12 md:h-12 bg-gray-900 group-hover:bg-blue-600 rounded-xl md:rounded-2xl flex items-center justify-center transition-all duration-500 shadow-xl group-hover:shadow-blue-500/20 group-hover:rotate-12">
-            <ShoppingCart className="w-5 h-5 md:w-6 md:h-6 text-white" />
+        <Link href="/" className="flex items-center gap-2 shrink-0">
+          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+            <ShoppingCart className="w-4 h-4 text-white" />
           </div>
-          <span className={`text-xl md:text-2xl font-black tracking-tighter transition-colors duration-500 ${shouldBeSolid ? 'text-gray-900' : 'text-white'}`}>
-            E<span className="text-blue-500">SHOP.</span>
+          <span className="text-lg font-bold text-gray-900">
+            E<span className="text-blue-600">Shop</span>
           </span>
         </Link>
 
-        {/* Search Bar - Desktop */}
-        <form onSubmit={submitHandler} className="hidden lg:flex flex-1 max-w-xl mx-12 relative group">
+        {/* Search - desktop only */}
+        <form onSubmit={search} className="hidden md:flex flex-1 max-w-md mx-6 relative">
           <input
             type="text"
-            placeholder="Search premium tech..."
-            className={`w-full pl-14 pr-6 py-4 rounded-[1.5rem] outline-none transition-all duration-500 font-bold text-sm ${
-              shouldBeSolid 
-                ? 'bg-gray-100 focus:bg-white focus:ring-2 focus:ring-blue-500/10 text-gray-900 placeholder:text-gray-500 border border-transparent focus:border-blue-100' 
-                : 'bg-white/10 focus:bg-white/20 text-white placeholder:text-gray-300 backdrop-blur-md border border-white/10'
-            }`}
+            placeholder="Search products..."
+            className="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-full text-sm text-gray-900 placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-blue-500/20"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
           />
-          <Search className={`absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors duration-500 ${
-            shouldBeSolid ? 'text-gray-400 group-focus-within:text-blue-600' : 'text-gray-300 group-focus-within:text-white'
-          }`} />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         </form>
 
-        {/* Actions */}
-        <div className="flex items-center space-x-2 md:space-x-4">
-          <Link href="/wishlist" className={`relative p-3 rounded-2xl transition-all duration-500 group ${
-            shouldBeSolid ? 'text-gray-900 hover:bg-gray-100 border border-transparent hover:border-gray-200' : 'text-white hover:bg-white/10'
-          }`}>
-            <Heart className="w-6 h-6 group-hover:fill-red-500 group-hover:text-red-500 transition-colors" />
+        {/* Right actions */}
+        <div className="flex items-center gap-0.5">
+          <Link href="/wishlist" className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+            <Heart className="w-5 h-5" />
             {wishlist.length > 0 && (
-              <span className="absolute top-2 right-2 bg-red-600 text-white text-[10px] font-black rounded-full w-5 h-5 flex items-center justify-center ring-2 ring-white animate-pulse">
-                {wishlist.length}
-              </span>
+              <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{wishlist.length}</span>
             )}
           </Link>
 
-          <Link href="/cart" className={`relative p-3 rounded-2xl transition-all duration-500 group ${
-            shouldBeSolid ? 'text-gray-900 hover:bg-gray-100 border border-transparent hover:border-gray-200' : 'text-white hover:bg-white/10'
-          }`}>
-            <ShoppingCart className="w-6 h-6 group-hover:text-blue-500 transition-colors" />
+          <Link href="/cart" className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+            <ShoppingCart className="w-5 h-5" />
             {cartCount > 0 && (
-              <span className="absolute top-2 right-2 bg-blue-600 text-white text-[10px] font-black rounded-full w-5 h-5 flex items-center justify-center ring-2 ring-white">
-                {cartCount}
-              </span>
+              <span className="absolute -top-0.5 -right-0.5 bg-blue-600 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{cartCount}</span>
             )}
           </Link>
 
-          {isLoaded && isSignedIn && (
-            <div className="ml-2 flex items-center space-x-4">
-              <UserButton 
-                appearance={{
-                  elements: {
-                    userButtonAvatarBox: "w-10 h-10 rounded-xl shadow-lg border-2 border-white/20",
-                    userButtonTrigger: "hover:scale-105 transition-transform"
-                  }
-                }}
-              />
+          {userInfo ? (
+            <>
+              <Link href="/profile" className="hidden sm:flex p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                <User className="w-5 h-5" />
+              </Link>
+              <button onClick={doLogout} className="hidden sm:flex p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                <LogOut className="w-5 h-5" />
+              </button>
+            </>
+          ) : (
+            <div className="hidden sm:flex items-center gap-2 ml-1">
+              <Link href="/login" className="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg font-medium transition-colors">
+                Sign In
+              </Link>
+              <Link href="/signup" className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors">
+                Sign Up
+              </Link>
             </div>
           )}
 
-          {isLoaded && !isSignedIn && (
-            <div className={`hidden md:block rounded-[1.5rem] font-black text-xs uppercase tracking-[0.2em] transition-all duration-500 shadow-xl active:scale-95 overflow-hidden ${
-              shouldBeSolid 
-                ? 'bg-gray-900 text-white hover:bg-blue-600 hover:shadow-blue-500/20' 
-                : 'bg-white text-gray-900 hover:bg-blue-500 hover:text-white'
-            }`}>
-              <SignInButton mode="modal">
-                <button className="w-full h-full px-8 py-4">Join Now</button>
-              </SignInButton>
-            </div>
-          )}
-
-          {/* Mobile Menu Toggle */}
-          <button 
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className={`p-3 lg:hidden rounded-2xl transition-colors ${
-              shouldBeSolid ? 'text-gray-900 hover:bg-gray-100' : 'text-white hover:bg-white/10'
-            }`}
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="sm:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
           >
-            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
       </div>
 
-      {/* Mobile Menu */}
-      <div className={`lg:hidden fixed inset-0 bg-white z-[90] transition-transform duration-500 transform ${
-        isMobileMenuOpen ? 'translate-y-0' : '-translate-y-full'
-      } pt-24 md:pt-32 px-6 overflow-y-auto`}>
-        <div className="flex flex-col space-y-8 text-center pb-12">
-           <form onSubmit={submitHandler} className="relative group max-w-md mx-auto w-full">
+      {/* Mobile menu */}
+      {mobileOpen && (
+        <div className="sm:hidden bg-white border-t border-gray-100 shadow-lg">
+          <div className="px-4 py-4 space-y-2">
+            <form onSubmit={search} className="relative mb-3">
               <input
                 type="text"
-                placeholder="Search..."
-                className="w-full pl-12 pr-6 py-4 md:py-5 bg-gray-100 rounded-2xl md:rounded-[2rem] outline-none font-bold text-gray-900"
+                placeholder="Search products..."
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-100 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 outline-none"
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
               />
-              <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-500 w-5 h-5" />
-           </form>
-           <nav className="flex flex-col space-y-4 md:space-y-6">
-              <Link href="/" className="text-4xl md:text-5xl font-black text-gray-900 tracking-tighter uppercase" onClick={() => setIsMobileMenuOpen(false)}>Home</Link>
-              <Link href="/cart" className="text-4xl md:text-5xl font-black text-gray-900 tracking-tighter uppercase" onClick={() => setIsMobileMenuOpen(false)}>Cart</Link>
-              <Link href="/wishlist" className="text-4xl md:text-5xl font-black text-gray-900 tracking-tighter uppercase" onClick={() => setIsMobileMenuOpen(false)}>Wishlist</Link>
-              {isLoaded && !isSignedIn && (
-                <SignInButton mode="modal">
-                  <button className="text-4xl md:text-5xl font-black text-blue-600 tracking-tighter uppercase" onClick={() => setIsMobileMenuOpen(false)}>Sign In</button>
-                </SignInButton>
-              )}
-              {isLoaded && isSignedIn && (
-                <div className="flex justify-center py-4">
-                  <UserButton appearance={{ elements: { userButtonAvatarBox: "w-16 h-16 md:w-20 md:h-20 rounded-2xl md:rounded-3xl" } }} />
-                </div>
-              )}
-           </nav>
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            </form>
+            <Link href="/" className="block py-2.5 px-3 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-lg" onClick={() => setMobileOpen(false)}>Home</Link>
+            <Link href="/cart" className="block py-2.5 px-3 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-lg" onClick={() => setMobileOpen(false)}>Cart</Link>
+            <Link href="/wishlist" className="block py-2.5 px-3 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-lg" onClick={() => setMobileOpen(false)}>Wishlist</Link>
+            <Link href="/orders" className="block py-2.5 px-3 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-lg" onClick={() => setMobileOpen(false)}>My Orders</Link>
+            {userInfo ? (
+              <>
+                <Link href="/profile" className="block py-2.5 px-3 text-sm font-medium text-gray-900 hover:bg-gray-50 rounded-lg" onClick={() => setMobileOpen(false)}>Profile</Link>
+                <button onClick={doLogout} className="block w-full text-left py-2.5 px-3 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg">Sign Out</button>
+              </>
+            ) : (
+              <div className="flex gap-2 pt-2 border-t border-gray-100">
+                <Link href="/login" className="flex-1 text-center py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50" onClick={() => setMobileOpen(false)}>Sign In</Link>
+                <Link href="/signup" className="flex-1 text-center py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700" onClick={() => setMobileOpen(false)}>Sign Up</Link>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </nav>
   );
 };
 
 export default Navbar;
-
-

@@ -4,7 +4,6 @@ import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
 import Footer from "@/components/Footer";
-import { ClerkProvider } from "@clerk/nextjs";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "E-SHOP | Elite Tech Experience",
-  description: "Premium electronics and lifestyle products for the elite.",
+  title: "EShop | Online Store",
+  description: "Your one-stop shop for electronics and lifestyle products.",
 };
 
 export default function RootLayout({
@@ -27,20 +26,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}>
-      <html
-        lang="en"
-        className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-      >
-        <body className="min-h-full flex flex-col bg-[#fafafa]">
-          <AuthProvider>
-            <CartProvider>
-              <main className="flex-grow">{children}</main>
-              <Footer />
-            </CartProvider>
-          </AuthProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+    >
+      <body className="min-h-full flex flex-col bg-[#fafafa]">
+        <AuthProvider>
+          <CartProvider>
+            <main className="flex-grow">{children}</main>
+            <Footer />
+          </CartProvider>
+        </AuthProvider>
+      </body>
+    </html>
   );
 }
